@@ -26,7 +26,7 @@ fun mainMenu(): Int {
         │  0) Exit                         │
         └──────────────────────────────────┘
         ➤ """.trimIndent())
-    return readlnOrNull()?.toIntOrNull() ?: 0
+    return readlnOrNull()?.toIntOrNull() ?: -1
 }
 
 fun runMenu (){
@@ -36,9 +36,9 @@ fun runMenu (){
         when(input) {
             1 -> addDiver()
             2 -> displayDiver()
-            3 -> println("Update diver")
-            4 -> println("Delete diver")
-            5 -> println("Find diver by ID")
+            3 -> updateDiver()
+            4 -> deleteDiver()
+            5 -> findDiverById()
             0 -> println("Exiting App")
             else -> println("Invalid Option")
         }
@@ -75,17 +75,72 @@ fun displayDiver(){
         println("No Divers found.")
     }else{
         println("\n============ ALL DIVERS ============")
-
         for (diver in divers){
-            println("──────────────────────────────────")
-            println("ID: ${diver.diverId}")
-            println("Name: ${diver.fullName}")
-            println("Date of Birth: ${diver.dob.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}")
-            println("Email: ${diver.email}")
-            println("Certification: ${diver.certification}")
-            println("Previous Dives: ${diver.previousDives}")
+            printDiver(diver)
         }
         println("────────────────────────────────\n")
     }
 }
 
+fun findDiverById(){
+    print("Enter Diver ID: ")
+    val id = readlnOrNull()?.toIntOrNull() ?: -1
+    val diver = diverService.findDiverById(id)
+
+    if (diver != null) {
+        printDiver(diver)
+    } else {
+        println("Diver not found.")
+    }
+    println()
+}
+
+fun deleteDiver() {
+    print("Enter ID to delete: ")
+    val id = readlnOrNull()?.toIntOrNull() ?: -1
+
+    if (diverService.deleteDiver(id)) {
+        println("Deleted")
+    } else {
+        println(" ID Not found")
+    }
+}
+
+fun updateDiver() {
+    print("Enter ID to update: ")
+    val id = readlnOrNull()?.toIntOrNull() ?: -1
+
+    print("Name: ")
+    val fullName = readlnOrNull() ?: ""
+
+    print("Date Of Birth (DD/MM/YYYY): ")
+    val dob = LocalDate.parse(readln(), DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+
+    print("Email: ")
+    val email = readlnOrNull() ?: ""
+
+    print("Certification: ")
+    val certification = readlnOrNull() ?: ""
+
+    print("Previous Dives: ")
+    val previousDives = readlnOrNull()?.toIntOrNull() ?: 0
+
+    val updated = Diver(id, fullName, dob, email, certification, previousDives)
+
+    if (diverService.updateDiver(id, updated)) {
+        println("Diver updated")
+    } else {
+        println("Diver not found")
+    }
+    println()
+}
+
+fun printDiver(diver: Diver) {
+    println("──────────────────────────────────")
+    println("ID: ${diver.diverId}")
+    println("Name: ${diver.fullName}")
+    println("Date of Birth: ${diver.dob.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}")
+    println("Email: ${diver.email}")
+    println("Certification: ${diver.certification}")
+    println("Previous Dives: ${diver.previousDives}")
+}
