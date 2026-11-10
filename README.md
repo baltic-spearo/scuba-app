@@ -12,6 +12,11 @@ Developed for the **Software Development Tools** module at South East Technologi
 - Update diver details
 - Delete a diver
 - Automatically generate unique diver IDs
+- Validate menu choices (0–5)
+- Validate diver name, date of birth, email and certification
+- Prevent negative previous dive counts
+- Handle invalid user input without crashing
+- Log application startup and exit
 
 Each diver has a name, date of birth, email, certification and previous dive count.
 
@@ -21,12 +26,14 @@ Each diver has a name, date of birth, email, certification and previous dive cou
 - **Gradle** — Build automation
 - **IntelliJ IDEA** — Development environment
 - **Git & GitHub** — Version control
+- **Kotlin Logging & SLF4J** — Application logging
 
 ## Project Structure
 
 - `Main.kt` — Console menu and user interaction
 - `Diver.kt` — Diver data model
 - `DiverService.kt` — Diver management and CRUD operations
+- `UserInput.kt` — Input validation and error handling
 
 ## How to Run
 
@@ -45,6 +52,12 @@ Each diver has a name, date of birth, email, certification and previous dive cou
 ## Testing
 
 All Diver CRUD operations have been manually tested with valid and invalid IDs.
+
+Input validation has also been manually tested with valid and invalid values, including menu choices, dates, emails, names, certifications and previous dive counts.
+
+Application startup and exit logging has been tested successfully.
+
+Automated JUnit tests will be added in a future version.
 
 ## Development
 
