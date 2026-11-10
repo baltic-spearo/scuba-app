@@ -1,17 +1,25 @@
-import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-
+import io.github.oshai.kotlinlogging.KotlinLogging
 import service.DiverService
 import model.Diver
+import utils.readNextInt
+import utils.readNextPositiveInt
+import utils.readNextDate
+import utils.readNextName
+import utils.readNextEmail
+import utils.readNextCertification
+
+private val logger = KotlinLogging.logger {}
 val diverService = DiverService()
 
 
 fun main(){
+    logger.info { "Scuba Dive Log App Started" }
     runMenu()
 }
 
 fun mainMenu(): Int {
-    print("""
+    println("""
         ┌──────────────────────────────────┐
         │         SCUBA DIVE LOG           │
         ├──────────────────────────────────┤
@@ -25,8 +33,16 @@ fun mainMenu(): Int {
         ├──────────────────────────────────┤
         │  0) Exit                         │
         └──────────────────────────────────┘
-        ➤ """.trimIndent())
-    return readlnOrNull()?.toIntOrNull() ?: -1
+        """.trimIndent())
+    while (true) {
+        val option = readNextInt("Enter menu choice (0-5): ")
+
+        if (option in 0..5) {
+            return option
+        }
+
+        println("Please enter a number between 0 and 5.")
+    }
 }
 
 fun runMenu (){
@@ -39,31 +55,15 @@ fun runMenu (){
             3 -> updateDiver()
             4 -> deleteDiver()
             5 -> findDiverById()
-            0 -> println("Exiting App")
-            else -> println("Invalid Option")
+            0 -> logger.info { "Scuba Dive Log App Exiting" }
         }
     } while (input != 0)
 }
 
 fun addDiver(){
-    print("Name: ")
-    val fullName = readlnOrNull() ?: ""
+    val diver = readDiverDetails(0)
 
-    print("Date Of Birth(DD/MM/YYYY): ")
-    val dob = LocalDate.parse(readln() ,DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-
-    print("Email: ")
-    val email = readlnOrNull()?: ""
-
-    print("Certification: ")
-    val certification = readlnOrNull() ?: ""
-
-    print("Previous Dives: ")
-    val previousDives = readlnOrNull()?.toIntOrNull() ?: 0
-
-    diverService.addDiver(
-        Diver(0, fullName , dob, email, certification, previousDives )
-    )
+    diverService.addDiver(diver)
 
     println("Diver added")
     println()
@@ -83,8 +83,7 @@ fun displayDiver(){
 }
 
 fun findDiverById(){
-    print("Enter Diver ID: ")
-    val id = readlnOrNull()?.toIntOrNull() ?: -1
+    val id = readNextInt("Enter Diver ID: ")
     val diver = diverService.findDiverById(id)
 
     if (diver != null) {
@@ -96,8 +95,7 @@ fun findDiverById(){
 }
 
 fun deleteDiver() {
-    print("Enter ID to delete: ")
-    val id = readlnOrNull()?.toIntOrNull() ?: -1
+    val id = readNextInt("Enter Diver ID to Delete: ")
 
     if (diverService.deleteDiver(id)) {
         println("Deleted")
@@ -107,25 +105,14 @@ fun deleteDiver() {
 }
 
 fun updateDiver() {
-    print("Enter ID to update: ")
-    val id = readlnOrNull()?.toIntOrNull() ?: -1
+    val id = readNextInt("Enter Diver ID to Update: ")
 
-    print("Name: ")
-    val fullName = readlnOrNull() ?: ""
+    if (diverService.findDiverById(id) == null) {
+        println("Diver not found.")
+        return
+    }
 
-    print("Date Of Birth (DD/MM/YYYY): ")
-    val dob = LocalDate.parse(readln(), DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-
-    print("Email: ")
-    val email = readlnOrNull() ?: ""
-
-    print("Certification: ")
-    val certification = readlnOrNull() ?: ""
-
-    print("Previous Dives: ")
-    val previousDives = readlnOrNull()?.toIntOrNull() ?: 0
-
-    val updated = Diver(id, fullName, dob, email, certification, previousDives)
+    val updated = readDiverDetails(id)
 
     if (diverService.updateDiver(id, updated)) {
         println("Diver updated")
@@ -143,4 +130,14 @@ fun printDiver(diver: Diver) {
     println("Email: ${diver.email}")
     println("Certification: ${diver.certification}")
     println("Previous Dives: ${diver.previousDives}")
+}
+
+fun readDiverDetails(id: Int): Diver {
+    val fullName = readNextName("Name: ")
+    val dob = readNextDate("Date Of Birth (DD/MM/YYYY): ")
+    val email = readNextEmail("Email: ")
+    val certification = readNextCertification("Certification: ")
+    val previousDives = readNextPositiveInt("Previous Dives: ")
+
+    return Diver(id, fullName, dob, email, certification, previousDives)
 }
