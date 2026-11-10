@@ -1,4 +1,4 @@
-### 🤿 Scuba Dive Log App
+# 🤿 Scuba Dive Log App
 
 A Kotlin console application designed to manage scuba divers and their diving activities.
 
