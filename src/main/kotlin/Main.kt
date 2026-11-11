@@ -34,6 +34,9 @@ fun mainMenu(): Int {
         │  3) Update Diver                 │
         │  4) Delete Diver                 │
         │  5) Find Diver by ID             │
+        │  6) Search Divers by Name        │
+        │  7) Filter by Certification      │
+        │  8) Filter by Previous Dives     │
         ├──────────────────────────────────┤
         │  20) Save Divers                 │
         │  21) Load Divers                 │
@@ -46,11 +49,11 @@ fun mainMenu(): Int {
     while (true) {
         val option = readNextInt("Enter menu choice: ")
 
-        if (option in 0..5 || option in 20..23) {
+        if (option in 0..8 || option in 20..23) {
             return option
         }
 
-        println("Invalid option. Choose 0-5 or 20-23.")
+        println("Invalid option. Choose 0-8 or 20-23.")
     }
 }
 
@@ -64,6 +67,9 @@ fun runMenu (){
             3 -> updateDiver()
             4 -> deleteDiver()
             5 -> findDiverById()
+            6 -> searchDiversByName()
+            7 -> filterDiversByCertification()
+            8 -> filterDiversByPreviousDives()
             20 -> save()
             21 -> load()
             22 -> saveXML()
@@ -125,6 +131,7 @@ fun updateDiver() {
         println("Diver not found.")
         return
     }
+    val updated = diver.copy()
 
     println("""
         What would you like to update?
@@ -138,16 +145,18 @@ fun updateDiver() {
 
     val choice = readNextInt("Enter choice: ")
     when (choice) {
-        1 -> diver.fullName = readNextName("New Name: ")
-        2 -> diver.dob = readNextDate("New Date of Birth (DD/MM/YYYY): ")
-        3 -> diver.email = readNextEmail("New Email: ")
-        4 -> diver.certification = readNextCertification("New Certification: ")
-        5 -> diver.previousDives = readNextPositiveInt("New Previous Dives: ")
+        1 -> updated.fullName = readNextName("New Name: ")
+        2 -> updated.dob = readNextDate("New Date of Birth (DD/MM/YYYY): ")
+        3 -> updated.email = readNextEmail("New Email: ")
+        4 -> updated.certification = readNextCertification("New Certification: ")
+        5 -> updated.previousDives = readNextPositiveInt("New Previous Dives: ")
         0 -> println("Update cancelled.")
         else -> println("Invalid option.")
     }
     if (choice in 1..5) {
-        println("Diver updated successfully!")
+        if (diverService.updateDiver(id, updated)) {
+            println("Diver updated successfully!")
+        }
     }
 }
 
@@ -206,5 +215,55 @@ fun loadXML() {
         println("Divers imported from XML.")
     } catch (e: Exception) {
         System.err.println("Error reading XML file: $e")
+    }
+}
+
+fun searchDiversByName() {
+    print("Enter Diver Name to Search: ")
+    val name = readln().trim()
+
+    val divers = diverService.searchDiversByName(name)
+
+    if (divers.isEmpty()) {
+        println("No matching divers found.")
+    } else {
+        println("\n============ SEARCH RESULTS ============")
+        for (diver in divers) {
+            printDiver(diver)
+        }
+        println("────────────────────────────────\n")
+    }
+}
+
+fun filterDiversByCertification() {
+    print("Enter Certification to Filter: ")
+    val certification = readln().trim()
+
+    val divers = diverService.filterDiversByCertification(certification)
+
+    if (divers.isEmpty()) {
+        println("No matching divers found.")
+    } else {
+        println("\n============ FILTER RESULTS ============")
+        for (diver in divers) {
+            printDiver(diver)
+        }
+        println("────────────────────────────────\n")
+    }
+}
+
+fun filterDiversByPreviousDives() {
+    val minDives = readNextPositiveInt("Enter Minimum Previous Dives: ")
+
+    val divers = diverService.filterDiversByPreviousDives(minDives)
+
+    if (divers.isEmpty()) {
+        println("No matching divers found.")
+    } else {
+        println("\n============ FILTER RESULTS ============")
+        for (diver in divers) {
+            printDiver(diver)
+        }
+        println("────────────────────────────────\n")
     }
 }
