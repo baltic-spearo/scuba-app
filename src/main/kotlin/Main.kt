@@ -50,7 +50,7 @@ fun mainMenu(): Int {
             return option
         }
 
-        println("Invalid option. Choose 0-5, 20 or 21.")
+        println("Invalid option. Choose 0-5 or 20-23.")
     }
 }
 
@@ -119,20 +119,36 @@ fun deleteDiver() {
 
 fun updateDiver() {
     val id = readNextInt("Enter Diver ID to Update: ")
+    val diver = diverService.findDiverById(id)
 
-    if (diverService.findDiverById(id) == null) {
+    if (diver == null) {
         println("Diver not found.")
         return
     }
 
-    val updated = readDiverDetails(id)
+    println("""
+        What would you like to update?
+        1) Full Name
+        2) Date of Birth
+        3) Email
+        4) Certification
+        5) Previous Dives
+        0) Cancel
+    """.trimIndent())
 
-    if (diverService.updateDiver(id, updated)) {
-        println("Diver updated")
-    } else {
-        println("Diver not found")
+    val choice = readNextInt("Enter choice: ")
+    when (choice) {
+        1 -> diver.fullName = readNextName("New Name: ")
+        2 -> diver.dob = readNextDate("New Date of Birth (DD/MM/YYYY): ")
+        3 -> diver.email = readNextEmail("New Email: ")
+        4 -> diver.certification = readNextCertification("New Certification: ")
+        5 -> diver.previousDives = readNextPositiveInt("New Previous Dives: ")
+        0 -> println("Update cancelled.")
+        else -> println("Invalid option.")
     }
-    println()
+    if (choice in 1..5) {
+        println("Diver updated successfully!")
+    }
 }
 
 fun printDiver(diver: Diver) {
