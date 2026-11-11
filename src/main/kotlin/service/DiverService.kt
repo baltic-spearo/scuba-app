@@ -50,4 +50,22 @@ class DiverService(serializerType: Serializer) {
         diverList = ArrayList(divers)
         lastId = (diverList.maxOfOrNull { it.diverId } ?: -1) + 1
     }
+
+    fun searchDiversByName(name: String): List<Diver> {
+        return diverList.filter {
+            it.fullName.contains(name, ignoreCase = true)
+        }
+    }
+
+    fun filterDiversByCertification(certification: String): List<Diver> {
+        return diverList.filter {
+            it.certification.equals(certification, ignoreCase = true)
+        }
+    }
+
+    fun filterDiversByPreviousDives(minDives: Int): List<Diver> {
+        return diverList.filter {
+            it.previousDives >= minDives
+        }
+    }
 }
