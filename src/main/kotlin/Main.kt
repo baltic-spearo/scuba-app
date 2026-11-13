@@ -37,6 +37,7 @@ fun mainMenu(): Int {
         │  6) Search Divers by Name        │
         │  7) Filter by Certification      │
         │  8) Filter by Previous Dives     │
+        │  9) Display Diver Statistics     │
         ├──────────────────────────────────┤
         │  20) Save Divers                 │
         │  21) Load Divers                 │
@@ -49,11 +50,11 @@ fun mainMenu(): Int {
     while (true) {
         val option = readNextInt("Enter menu choice: ")
 
-        if (option in 0..8 || option in 20..23) {
+        if (option in 0..9 || option in 20..23) {
             return option
         }
 
-        println("Invalid option. Choose 0-8 or 20-23.")
+        println("Invalid option. Choose 0-9 or 20-23.")
     }
 }
 
@@ -70,6 +71,7 @@ fun runMenu (){
             6 -> searchDiversByName()
             7 -> filterDiversByCertification()
             8 -> filterDiversByPreviousDives()
+            9 -> displayDiverStatistics()
             20 -> save()
             21 -> load()
             22 -> saveXML()
@@ -170,6 +172,18 @@ fun printDiver(diver: Diver) {
     println("Previous Dives: ${diver.previousDives}")
 }
 
+fun displayResults(divers: List<Diver>) {
+    if (divers.isEmpty()) {
+        println("No matching divers found.")
+    } else {
+        println("\n============ RESULTS ============")
+        for (diver in divers) {
+            printDiver(diver)
+        }
+        println("────────────────────────────────\n")
+    }
+}
+
 fun readDiverDetails(id: Int): Diver {
     val fullName = readNextName("Name: ")
     val dob = readNextDate("Date Of Birth (DD/MM/YYYY): ")
@@ -224,15 +238,7 @@ fun searchDiversByName() {
 
     val divers = diverService.searchDiversByName(name)
 
-    if (divers.isEmpty()) {
-        println("No matching divers found.")
-    } else {
-        println("\n============ SEARCH RESULTS ============")
-        for (diver in divers) {
-            printDiver(diver)
-        }
-        println("────────────────────────────────\n")
-    }
+    displayResults(divers)
 }
 
 fun filterDiversByCertification() {
@@ -241,15 +247,7 @@ fun filterDiversByCertification() {
 
     val divers = diverService.filterDiversByCertification(certification)
 
-    if (divers.isEmpty()) {
-        println("No matching divers found.")
-    } else {
-        println("\n============ FILTER RESULTS ============")
-        for (diver in divers) {
-            printDiver(diver)
-        }
-        println("────────────────────────────────\n")
-    }
+    displayResults(divers)
 }
 
 fun filterDiversByPreviousDives() {
@@ -257,13 +255,19 @@ fun filterDiversByPreviousDives() {
 
     val divers = diverService.filterDiversByPreviousDives(minDives)
 
-    if (divers.isEmpty()) {
-        println("No matching divers found.")
-    } else {
-        println("\n============ FILTER RESULTS ============")
-        for (diver in divers) {
-            printDiver(diver)
-        }
-        println("────────────────────────────────\n")
-    }
+    displayResults(divers)
 }
+
+fun displayDiverStatistics() {
+    println("\n============ DIVER STATISTICS ============")
+
+    println("Total Divers: ${diverService.numberOfDivers()}")
+
+    val certification = readNextCertification("Enter Certification: ")
+    println("Divers with $certification: ${diverService.numberOfDiversByCertification(certification)}")
+
+    println("Experienced Divers (100+ dives): ${diverService.numberOfExperiencedDivers()}")
+
+    println("==========================================\n")
+}
+

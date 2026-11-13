@@ -22,6 +22,10 @@ class DiverService(serializerType: Serializer) {
         return diverList.find {it.diverId == id}
     }
 
+    private fun updateLastId() {
+        lastId = (diverList.maxOfOrNull { it.diverId } ?: -1) + 1
+    }
+
     fun deleteDiver(id: Int): Boolean {
         return diverList.removeIf { it.diverId == id }
     }
@@ -39,7 +43,7 @@ class DiverService(serializerType: Serializer) {
     fun load() {
         val array = serializer.read(Array<Diver>::class.java)
         diverList = array.toCollection(ArrayList())
-        lastId = (diverList.maxOfOrNull { it.diverId } ?: -1) + 1
+        updateLastId()
     }
 
     fun store() {
@@ -48,7 +52,7 @@ class DiverService(serializerType: Serializer) {
 
     fun replaceDivers(divers: List<Diver>) {
         diverList = ArrayList(divers)
-        lastId = (diverList.maxOfOrNull { it.diverId } ?: -1) + 1
+        updateLastId()
     }
 
     fun searchDiversByName(name: String): List<Diver> {
@@ -68,4 +72,23 @@ class DiverService(serializerType: Serializer) {
             it.previousDives >= minDives
         }
     }
+
+    fun numberOfDivers(): Int {
+        return diverList.size
+    }
+
+    fun numberOfDiversByCertification(certification: String): Int {
+        return diverList.count {
+            it.certification.equals(certification, ignoreCase = true)
+        }
+    }
+
+
+    fun numberOfExperiencedDivers(): Int {
+        return diverList.count {
+            it.previousDives >= 100
+        }
+    }
+
+
 }
