@@ -1,7 +1,9 @@
 import java.time.format.DateTimeFormatter
 import io.github.oshai.kotlinlogging.KotlinLogging
 import service.DiverService
+import service.LoggedDiveService
 import model.Diver
+import model.LoggedDive
 import utils.readNextInt
 import utils.readNextPositiveInt
 import utils.readNextDate
@@ -11,11 +13,14 @@ import utils.readNextCertification
 import persistence.JSONSerializer
 import persistence.XMLSerializer
 import java.io.File
+import utils.readNextRequiredText
+import utils.readNextPositiveDouble
+import utils.readNextWaterTemperature
 
 private val logger = KotlinLogging.logger {}
 val diverService = DiverService(JSONSerializer(File("divers.json")))
 val xmlDiverService = DiverService(XMLSerializer(File("divers.xml")))
-
+val loggedDiveService = LoggedDiveService()
 
 fun main(){
     logger.info { "Scuba Dive Log App Started" }
@@ -39,6 +44,14 @@ fun mainMenu(): Int {
         │  8) Filter by Previous Dives     │
         │  9) Display Diver Statistics     │
         ├──────────────────────────────────┤
+        │          DIVE MANAGEMENT         │
+        ├──────────────────────────────────┤
+        │  10) Add Dive                    │
+        │  11) Display All Dives           │
+        │  12) Update Dive                 │
+        │  13) Delete Dive                 │
+        │  14) Find Dive by ID             │
+        ├──────────────────────────────────┤
         │  20) Save Divers                 │
         │  21) Load Divers                 │
         │  22) Export Divers to XML        │
@@ -50,11 +63,11 @@ fun mainMenu(): Int {
     while (true) {
         val option = readNextInt("Enter menu choice: ")
 
-        if (option in 0..9 || option in 20..23) {
+        if (option in 0..14 || option in 20..23) {
             return option
         }
 
-        println("Invalid option. Choose 0-9 or 20-23.")
+        println("Invalid option. Choose 0-14 or 20-23.")
     }
 }
 
@@ -72,6 +85,11 @@ fun runMenu (){
             7 -> filterDiversByCertification()
             8 -> filterDiversByPreviousDives()
             9 -> displayDiverStatistics()
+            10 -> addDive()
+            11 -> displayDives()
+            12 -> updateDive()
+            13 -> deleteDive()
+            14 -> findDiveById()
             20 -> save()
             21 -> load()
             22 -> saveXML()
@@ -271,3 +289,138 @@ fun displayDiverStatistics() {
     println("==========================================\n")
 }
 
+fun addDive() {
+    val dive = readDiveDetails(0)
+
+    loggedDiveService.addDive(dive)
+
+    println("Dive added")
+    println()
+}
+
+fun readDiveDetails(id: Int): LoggedDive {
+    val location = readNextRequiredText("Dive Location: ")
+    val diveDate = readNextDate("Dive Date (DD/MM/YYYY): ")
+    val maxDepth = readNextPositiveDouble("Maximum Depth (metres): ")
+    val duration = readNextPositiveInt("Duration (minutes): " ,1)
+    val waterTemperature = readNextWaterTemperature("Water Temperature (°C): ")
+    val visibility = readNextPositiveInt("Visibility (metres): ")
+    val diveType = readNextRequiredText("Dive Type: ")
+
+    print("Notes (optional): ")
+    val notes = readln().trim()
+
+    return LoggedDive(
+        id,
+        location,
+        diveDate,
+        maxDepth,
+        duration,
+        waterTemperature,
+        visibility,
+        diveType,
+        notes
+    )
+}
+
+fun displayDives() {
+    val dives = loggedDiveService.getDives()
+
+    if (dives.isEmpty()) {
+        println("No dives found.")
+    } else {
+        println("\n============ ALL DIVES ============")
+
+        for (dive in dives) {
+            printDive(dive)
+        }
+
+        println("────────────────────────────────\n")
+    }
+}
+
+fun printDive(dive: LoggedDive) {
+    println("──────────────────────────────────")
+    println("ID: ${dive.diveId}")
+    println("Location: ${dive.location}")
+    println("Date: ${dive.diveDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}")
+    println("Maximum Depth: ${dive.maxDepth} m")
+    println("Duration: ${dive.duration} minutes")
+    println("Water Temperature: ${dive.waterTemperature} °C")
+    println("Visibility: ${dive.visibility} m")
+    println("Dive Type: ${dive.diveType}")
+    println("Notes: ${dive.notes}")
+    println("Archived: ${dive.isArchived}")
+}
+
+fun findDiveById() {
+    val id = readNextInt("Enter Dive ID: ")
+    val dive = loggedDiveService.findDiveById(id)
+
+    if (dive != null) {
+        printDive(dive)
+    } else {
+        println("Dive not found.")
+    }
+    println()
+}
+
+fun deleteDive() {
+    val id = readNextInt("Enter Dive ID to Delete: ")
+
+    if (loggedDiveService.deleteDive(id)) {
+        println("Dive deleted successfully.")
+    } else {
+        println("Dive not found.")
+    }
+    println()
+}
+
+fun updateDive() {
+    val id = readNextInt("Enter Dive ID to Update: ")
+    val dive = loggedDiveService.findDiveById(id)
+
+    if (dive == null) {
+        println("Dive not found.")
+        return
+    }
+
+    val updated = dive.copy()
+
+    println("""
+        What would you like to update?
+        1) Location
+        2) Dive Date
+        3) Maximum Depth
+        4) Duration
+        5) Water Temperature
+        6) Visibility
+        7) Dive Type
+        8) Notes
+        0) Cancel
+    """.trimIndent())
+
+    val choice = readNextInt("Enter choice: ")
+
+    when (choice) {
+        1 -> updated.location = readNextRequiredText("New Location: ")
+        2 -> updated.diveDate = readNextDate("New Dive Date (DD/MM/YYYY): ")
+        3 -> updated.maxDepth = readNextPositiveDouble("New Maximum Depth (metres): ")
+        4 -> updated.duration = readNextPositiveInt("New Duration (minutes): ", 1)
+        5 -> updated.waterTemperature = readNextWaterTemperature("New Water Temperature (°C): ")
+        6 -> updated.visibility = readNextPositiveInt("New Visibility (metres): ")
+        7 -> updated.diveType = readNextRequiredText("New Dive Type: ")
+        8 -> {
+            print("New Notes (optional): ")
+            updated.notes = readln().trim()
+        }
+        0 -> println("Update cancelled.")
+        else -> println("Invalid option.")
+    }
+
+    if (choice in 1..8) {
+        if (loggedDiveService.updateDive(id, updated)) {
+            println("Dive updated successfully!")
+        }
+    }
+}
