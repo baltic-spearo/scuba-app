@@ -16,15 +16,15 @@ fun readNextInt(prompt: String = ""): Int {
     }
 }
 
-fun readNextPositiveInt(prompt: String = ""): Int {
+fun readNextPositiveInt(prompt: String = "", minimum:Int = 0): Int {
     while (true) {
         val value = readNextInt(prompt)
 
-        if (value >= 0) {
+        if (value >= minimum) {
             return value
         }
 
-        println("Please enter a number of 0 or greater.")
+        println("Please enter a number of $minimum or greater.")
     }
 }
 
@@ -37,7 +37,7 @@ fun readNextDate(prompt: String = ""): LocalDate {
 
         val dob = try {
             LocalDate.parse(readln(), formatter)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
 
@@ -45,7 +45,7 @@ fun readNextDate(prompt: String = ""): LocalDate {
             return dob
         }
 
-        println("Please enter a valid date of birth.")
+        println("Please enter a valid date.")
     }
 }
 
@@ -86,5 +86,44 @@ fun readNextCertification(prompt: String = ""): String {
         }
 
         println("Please enter a valid certification.")
+    }
+}
+
+fun readNextRequiredText(prompt: String = ""): String {
+    while (true) {
+        print(prompt)
+        val value = readln().trim()
+
+        if (value.isNotEmpty()) {
+            return value
+        }
+
+        println("This field cannot be empty.")
+    }
+}
+
+fun readNextPositiveDouble(prompt: String = ""): Double {
+    while (true) {
+        print(prompt)
+        val value = readln().trim().toDoubleOrNull()
+
+        if (value != null && value.isFinite() && value > 0) {
+            return value
+        }
+
+        println("Please enter a valid number greater than 0.")
+    }
+}
+
+fun readNextWaterTemperature(prompt: String = ""): Double {
+    while (true) {
+        print(prompt)
+        val value = readln().trim().toDoubleOrNull()
+
+        if (value != null && value.isFinite() && value in -2.0..50.0) {
+            return value
+        }
+
+        println("Please enter a temperature between -2 and 50°C.")
     }
 }

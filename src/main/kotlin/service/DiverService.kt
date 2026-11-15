@@ -83,7 +83,6 @@ class DiverService(serializerType: Serializer) {
         }
     }
 
-
     fun numberOfExperiencedDivers(): Int {
         return diverList.count {
             it.previousDives >= 100
