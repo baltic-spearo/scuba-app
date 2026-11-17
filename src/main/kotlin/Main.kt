@@ -2,6 +2,7 @@ import java.time.format.DateTimeFormatter
 import io.github.oshai.kotlinlogging.KotlinLogging
 import service.DiverService
 import service.LoggedDiveService
+import service.DiverDiveService
 import model.Diver
 import model.LoggedDive
 import utils.readNextInt
@@ -21,6 +22,7 @@ private val logger = KotlinLogging.logger {}
 val diverService = DiverService(JSONSerializer(File("divers.json")))
 val xmlDiverService = DiverService(XMLSerializer(File("divers.xml")))
 val loggedDiveService = LoggedDiveService()
+val diverDiveService = DiverDiveService(diverService,loggedDiveService)
 
 fun main(){
     logger.info { "Scuba Dive Log App Started" }
@@ -51,6 +53,10 @@ fun mainMenu(): Int {
         │  12) Update Dive                 │
         │  13) Delete Dive                 │
         │  14) Find Dive by ID             │
+        │  15) Assign Diver to Dive        │
+        │  16) Remove Diver from Dive      │
+        │  17) Display Divers by Dive      │
+        │  18) Display Dives by Diver      │
         ├──────────────────────────────────┤
         │  20) Save Divers                 │
         │  21) Load Divers                 │
@@ -63,11 +69,11 @@ fun mainMenu(): Int {
     while (true) {
         val option = readNextInt("Enter menu choice: ")
 
-        if (option in 0..14 || option in 20..23) {
+        if (option in 0..18 || option in 20..23) {
             return option
         }
 
-        println("Invalid option. Choose 0-14 or 20-23.")
+        println("Invalid option. Choose 0-18 or 20-23.")
     }
 }
 
@@ -90,6 +96,10 @@ fun runMenu (){
             12 -> updateDive()
             13 -> deleteDive()
             14 -> findDiveById()
+            15 -> assignDiverToDive()
+            16 -> removeDiverFromDive()
+            17 -> displayDiversByDive()
+            18 -> displayDivesByDiver()
             20 -> save()
             21 -> load()
             22 -> saveXML()
@@ -424,3 +434,88 @@ fun updateDive() {
         }
     }
 }
+
+fun assignDiverToDive() {
+    val diverId = readNextInt("Enter Diver ID: ")
+    val diveId = readNextInt("Enter Dive ID: ")
+
+    if (diverService.findDiverById(diverId) == null) {
+        println("Diver not found.")
+        return
+    }
+
+    if (loggedDiveService.findDiveById(diveId) == null) {
+        println("Dive not found.")
+        return
+    }
+
+    if (diverDiveService.addDiverToDive(diverId, diveId)) {
+        println("Diver assigned to dive successfully.")
+    } else {
+        println("Diver is already assigned to this dive.")
+    }
+}
+
+fun removeDiverFromDive() {
+    val diverId = readNextInt("Enter Diver ID: ")
+    val diveId = readNextInt("Enter Dive ID: ")
+
+    if (diverDiveService.removeDiverFromDive(diverId, diveId)) {
+        println("Diver removed from dive successfully.")
+    } else {
+        println("Diver is not assigned to this dive.")
+    }
+}
+
+fun displayDiversByDive() {
+    val diveId = readNextInt("Enter Dive ID: ")
+
+    if (loggedDiveService.findDiveById(diveId) == null) {
+        println("Dive not found.")
+        return
+    }
+
+    val relationships = diverDiveService.getDiversByDive(diveId)
+
+    if (relationships.isEmpty()) {
+        println("No divers assigned to this dive.")
+    } else {
+        println("\n============ DIVERS BY DIVE ============")
+
+        for ((diverId) in relationships) {
+            val diver = diverService.findDiverById(diverId)
+
+            if (diver != null) {
+                printDiver(diver)
+            }
+        }
+    }
+}
+
+fun displayDivesByDiver() {
+    val diverId = readNextInt("Enter Diver ID: ")
+
+    if (diverService.findDiverById(diverId) == null) {
+        println("Diver not found.")
+        return
+    }
+
+    val relationships = diverDiveService.getDivesByDiver(diverId)
+
+    if (relationships.isEmpty()) {
+        println("No dives assigned to this diver.")
+    } else {
+        println("\n============ DIVES BY DIVER ============")
+
+        for ((_, diveId) in relationships) {
+            val dive = loggedDiveService.findDiveById(diveId)
+
+            if (dive != null) {
+                printDive(dive)
+            }
+        }
+    }
+}
+
+
+

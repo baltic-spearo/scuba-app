@@ -1,4 +1,3 @@
-
 package service
 
 import org.junit.jupiter.api.Test
@@ -162,6 +161,7 @@ class DiverServiceTest {
             assertFalse(emptyDiverService.deleteDiver(1))
         }
     }
+
     @Nested
     inner class UpdateDivers {
         @Test
@@ -227,6 +227,7 @@ class DiverServiceTest {
             assertNull(diver)
         }
     }
+
     @Nested
     inner class SearchDivers {
 
@@ -259,6 +260,7 @@ class DiverServiceTest {
             assertEquals(2, divers.size)
         }
     }
+
     @Nested
     inner class FilterDiversByCertification {
 
@@ -370,6 +372,7 @@ class DiverServiceTest {
             assertEquals(1, populatedDiverService.numberOfExperiencedDivers())
         }
     }
+
     @Nested
     inner class JSONPersistence {
 
@@ -412,6 +415,7 @@ class DiverServiceTest {
             file.delete()
         }
     }
+
     @Nested
     inner class ReplaceDivers {
 
