@@ -88,6 +88,4 @@ class DiverService(serializerType: Serializer) {
             it.previousDives >= 100
         }
     }
-
-
 }
