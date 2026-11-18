@@ -21,9 +21,10 @@ import utils.readNextWaterTemperature
 private val logger = KotlinLogging.logger {}
 val diverService = DiverService(JSONSerializer(File("divers.json")))
 val xmlDiverService = DiverService(XMLSerializer(File("divers.xml")))
-val loggedDiveService = LoggedDiveService()
-val diverDiveService = DiverDiveService(diverService,loggedDiveService)
-
+val loggedDiveService = LoggedDiveService(JSONSerializer(File("dives.json")))
+val diverDiveService = DiverDiveService(diverService, loggedDiveService, JSONSerializer(File("diverdives.json")))
+val xmlLoggedDiveService = LoggedDiveService(XMLSerializer(File("dives.xml")))
+val xmlDiverDiveService = DiverDiveService(diverService, loggedDiveService, XMLSerializer(File("diverdives.xml")))
 fun main(){
     logger.info { "Scuba Dive Log App Started" }
     runMenu()
@@ -31,49 +32,57 @@ fun main(){
 
 fun mainMenu(): Int {
     println("""
-        ┌──────────────────────────────────┐
-        │         SCUBA DIVE LOG           │
-        ├──────────────────────────────────┤
-        │           DIVER MENU             │
-        ├──────────────────────────────────┤
-        │  1) Add Diver                    │
-        │  2) Display All Divers           │
-        │  3) Update Diver                 │
-        │  4) Delete Diver                 │
-        │  5) Find Diver by ID             │
-        │  6) Search Divers by Name        │
-        │  7) Filter by Certification      │
-        │  8) Filter by Previous Dives     │
-        │  9) Display Diver Statistics     │
-        ├──────────────────────────────────┤
-        │          DIVE MANAGEMENT         │
-        ├──────────────────────────────────┤
-        │  10) Add Dive                    │
-        │  11) Display All Dives           │
-        │  12) Update Dive                 │
-        │  13) Delete Dive                 │
-        │  14) Find Dive by ID             │
-        │  15) Assign Diver to Dive        │
-        │  16) Remove Diver from Dive      │
-        │  17) Display Divers by Dive      │
-        │  18) Display Dives by Diver      │
-        ├──────────────────────────────────┤
-        │  20) Save Divers                 │
-        │  21) Load Divers                 │
-        │  22) Export Divers to XML        │
-        │  23) Import Divers from XML      │    
-        ├──────────────────────────────────┤
-        │  0) Exit                         │
-        └──────────────────────────────────┘
+        ┌────────────────────────────────────┐
+        │         SCUBA DIVE LOG             │
+        ├────────────────────────────────────┤
+        │           DIVER MENU               │
+        ├────────────────────────────────────┤
+        │  1) Add Diver                      │
+        │  2) Display All Divers             │
+        │  3) Update Diver                   │
+        │  4) Delete Diver                   │
+        │  5) Find Diver by ID               │
+        │  6) Search Divers by Name          │
+        │  7) Filter by Certification        │
+        │  8) Filter by Previous Dives       │
+        │  9) Display Diver Statistics       │
+        ├────────────────────────────────────┤
+        │          DIVE MANAGEMENT           │
+        ├────────────────────────────────────┤
+        │  10) Add Dive                      │
+        │  11) Display All Dives             │
+        │  12) Update Dive                   │
+        │  13) Delete Dive                   │
+        │  14) Find Dive by ID               │
+        │  15) Assign Diver to Dive          │
+        │  16) Remove Diver from Dive        │  
+        │  17) Display Divers by Dive        │
+        │  18) Display Dives by Diver        │
+        ├────────────────────────────────────┤
+        │  20) Save Divers                   │
+        │  21) Load Divers                   │
+        │  22) Export Divers to XML          │
+        │  23) Import Divers from XML        │
+        │  24) Save Dives                    │
+        │  25) Load Dives                    │
+        │  26) Save Diver-Dive Relationship  │
+        │  27) Load Diver-Dive Relationship  │ 
+        │  28) Export Dives to XML           │
+        │  29) Import Dives from XML         │ 
+        │  30) Export Relationships to XML   │
+        │  31) Import Relationships from XML │
+        ├────────────────────────────────────┤
+        │  0) Exit                           │
+        └────────────────────────────────────┘
         """.trimIndent())
     while (true) {
         val option = readNextInt("Enter menu choice: ")
 
-        if (option in 0..18 || option in 20..23) {
+        if (option in 0..18 || option in 20..31) {
             return option
         }
 
-        println("Invalid option. Choose 0-18 or 20-23.")
+        println("Invalid option. Choose 0-18 or 20-31.")
     }
 }
 
@@ -104,6 +113,15 @@ fun runMenu (){
             21 -> load()
             22 -> saveXML()
             23 -> loadXML()
+            24 -> saveDives()
+            25 -> loadDives()
+            26 -> saveDiverDives()
+            27 -> loadDiverDives()
+            28 -> saveDivesXML()
+            29 -> loadDivesXML()
+            30 -> saveRelationshipsXML()
+            31 -> loadRelationshipsXML()
+
             0 -> logger.info { "Scuba Dive Log App Exiting" }
         }
     } while (input != 0)
@@ -119,16 +137,7 @@ fun addDiver(){
 }
 
 fun displayDiver(){
-    val divers = diverService.getDivers()
-    if (divers.isEmpty()){
-        println("No Divers found.")
-    }else{
-        println("\n============ ALL DIVERS ============")
-        for (diver in divers){
-            printDiver(diver)
-        }
-        println("────────────────────────────────\n")
-    }
+    displayResults(diverService.getDivers())
 }
 
 fun findDiverById(){
@@ -222,41 +231,38 @@ fun readDiverDetails(id: Int): Diver {
     return Diver(id, fullName, dob, email, certification, previousDives)
 }
 
-fun save() {
+fun runPersistence(action: () -> Unit) {
     try {
-        diverService.store()
-        println("Saved Divers")
+        action()
+        println("Operation completed successfully.")
     } catch (e: Exception) {
-        System.err.println("Error writing to file: $e")
+        System.err.println("Error during persistence operation: $e")
+    }
+}
+
+fun save() {
+    runPersistence {
+        diverService.store()
     }
 }
 
 fun load() {
-    try {
+    runPersistence {
         diverService.load()
-        println("Loaded Divers")
-    } catch (e: Exception) {
-        System.err.println("Error reading from file: $e")
     }
 }
 
 fun saveXML() {
-    try {
+    runPersistence {
         xmlDiverService.replaceDivers(diverService.getDivers())
         xmlDiverService.store()
-        println("Divers exported to XML.")
-    } catch (e: Exception) {
-        System.err.println("Error writing XML file: $e")
     }
 }
 
 fun loadXML() {
-    try {
+    runPersistence {
         xmlDiverService.load()
         diverService.replaceDivers(xmlDiverService.getDivers())
-        println("Divers imported from XML.")
-    } catch (e: Exception) {
-        System.err.println("Error reading XML file: $e")
     }
 }
 
@@ -517,5 +523,58 @@ fun displayDivesByDiver() {
     }
 }
 
+fun saveDives() {
+    runPersistence {
+        loggedDiveService.store()
+    }
+}
 
+fun loadDives() {
+    runPersistence {
+        loggedDiveService.load()
+    }
+}
 
+fun saveDiverDives() {
+    runPersistence {
+        diverDiveService.store()
+    }
+}
+
+fun loadDiverDives() {
+    runPersistence {
+        diverDiveService.load()
+    }
+}
+
+fun saveDivesXML() {
+    runPersistence {
+        xmlLoggedDiveService.replaceDives(loggedDiveService.getDives())
+        xmlLoggedDiveService.store()
+    }
+}
+
+fun loadDivesXML() {
+    runPersistence {
+        xmlLoggedDiveService.load()
+        loggedDiveService.replaceDives(xmlLoggedDiveService.getDives())
+    }
+}
+
+fun saveRelationshipsXML() {
+    runPersistence {
+        xmlDiverDiveService.replaceRelationships(
+            diverDiveService.getRelationships()
+        )
+        xmlDiverDiveService.store()
+    }
+}
+
+fun loadRelationshipsXML() {
+    runPersistence {
+        xmlDiverDiveService.load()
+        diverDiveService.replaceRelationships(
+            xmlDiverDiveService.getRelationships()
+        )
+    }
+}

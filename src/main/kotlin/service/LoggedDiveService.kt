@@ -1,9 +1,10 @@
 package service
 
 import model.LoggedDive
+import persistence.Serializer
 
-class LoggedDiveService {
-
+class LoggedDiveService (serializerType: Serializer) {
+    private var serializer: Serializer = serializerType
     private var diveList = ArrayList<LoggedDive>()
     private var lastId = 0
 
@@ -46,4 +47,24 @@ class LoggedDiveService {
 
         return false
     }
+
+    private fun updateLastId() {
+        lastId = diveList.maxOfOrNull { it.diveId } ?: 0
+    }
+
+    fun store() {
+        serializer.write(diveList)
+    }
+
+    fun load() {
+        val array = serializer.read(Array<LoggedDive>::class.java)
+        diveList = array.toCollection(ArrayList())
+        updateLastId()
+    }
+
+    fun replaceDives(dives: List<LoggedDive>) {
+        diveList = ArrayList(dives.map { it.copy() })
+        updateLastId()
+    }
+
 }
